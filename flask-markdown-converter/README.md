@@ -1,6 +1,19 @@
 # Flask JSON-to-Markdown Conversion Service
 
+> **Note:** This project is a test of Roo code and is based on the [flask-webhook-spec](../flask-webhook-spec.md) specification document. It serves as a demonstration of implementing a Flask-based webhook service according to a detailed specification.
+
 A Flask-based web service that provides webhook endpoints to accept various types of JSON input and return Markdown output. The system is structured to support multiple conversion types through a unified API pattern, with the initial implementation focused on Google Calendar data.
+
+## What This Service Does
+
+This service acts as an intermediary that transforms structured JSON data into human-readable Markdown format for easy display or sharing. Key capabilities include:
+
+- Accepting JSON payloads via HTTP POST requests
+- Converting structured data to Markdown using configurable Jinja2 templates
+- Supporting different data formats through a unified API structure
+- Applying configurable preprocessors to transform data before rendering
+- Requiring API key authentication for all endpoints
+- Providing detailed error handling and validation
 
 ## Features
 
@@ -132,7 +145,7 @@ Content-Type: application/json
 ```bash
 curl -X POST \
   http://localhost:5000/api/v1/convert/calendar \
-  -H 'X-API-Key: your_api_key' \
+  -H 'X-API-Key: test-key' \
   -H 'Content-Type: application/json' \
   -d '[
     {
