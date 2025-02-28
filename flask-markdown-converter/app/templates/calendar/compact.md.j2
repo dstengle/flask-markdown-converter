@@ -1,0 +1,40 @@
+# Calendar Events (Compact)
+
+{% if data %}
+{# Group events by date #}
+{% set events_by_date = {} %}
+{% for event in data %}
+  {% if event.start.date %}
+    {# All-day event #}
+    {% set date_key = event.start.date %}
+  {% elif event.start.dateTime %}
+    {# Event with specific time #}
+    {% set date_key = event.start.dateTime.split('T')[0] %}
+  {% else %}
+    {% continue %}
+  {% endif %}
+  
+  {% if date_key not in events_by_date %}
+    {% set events_by_date = events_by_date | dict_add(date_key, []) %}
+  {% endif %}
+  {% set _ = events_by_date[date_key].append(event) %}
+{% endfor %}
+
+{# Sort dates #}
+{% set sorted_dates = events_by_date.keys() | sort %}
+
+{# Display events grouped by date #}
+{% for date_str in sorted_dates %}
+  {% set date_events = events_by_date[date_str] %}
+  {% set formatted_date = date_str | format_date %}
+  
+## {{ formatted_date }}
+
+  {% for event in date_events %}
+- {% if event.start.date %}[All day]{% elif event.start.dateTime %}[{{ event.start.dateTime | format_time }}]{% endif %} **{{ event.summary | default('Untitled Event') }}**{% if event.eventType == "workingLocation" and event.workingLocationProperties %} ({{ event.workingLocationProperties.type | replace("homeOffice", "Home") | replace("officeLocation", "Office") | replace("customLocation", "Custom") }}){% endif %}
+  {% endfor %}
+
+{% endfor %}
+{% else %}
+No calendar events found.
+{% endif %}

@@ -1,0 +1,16 @@
+version: '3'
+
+services:
+  web:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_APP=app
+      - FLASK_ENV=development
+      - SECRET_KEY=dev-key-change-in-production
+      - API_KEYS=test-key,dev-key
+      - LOG_LEVEL=DEBUG
+    volumes:
+      - ./app:/app/app
+    restart: unless-stopped

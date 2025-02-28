@@ -1,0 +1,69 @@
+name: Calendar
+description: "Google Calendar data to Markdown"
+templates:
+  - id: standard
+    name: "Standard Format"
+    description: "Detailed calendar view with events grouped by day"
+    file: "calendar/standard.md.j2"
+    default: true
+    sample: "# Calendar Events\n\n## February 27, 2025\n\n- **Home** - Work from home\n  - All day event\n  - Status: Confirmed"
+  - id: compact
+    name: "Compact Format"
+    description: "Condensed calendar view with minimal details"
+    file: "calendar/compact.md.j2"
+    default: false
+    sample: "# Calendar Events (Compact)\n\n## February 27, 2025\n\n- [All day] **Home** (Home)"
+preprocessors:
+  - id: sort_events
+    name: "Sort Events"
+    description: "Sort events by start date and time"
+    function: "sort_events_by_datetime"
+    default: true
+    parameters:
+      - name: sortOrder
+        type: string
+        description: "Sort order (asc or desc)"
+        default: "asc"
+        required: false
+  - id: group_by_date
+    name: "Group by Date"
+    description: "Group events by date"
+    function: "group_events_by_date"
+    default: true
+  - id: clean_descriptions
+    name: "Clean Descriptions"
+    description: "Remove HTML and normalize formatting in descriptions"
+    function: "clean_event_descriptions"
+    default: false
+  - id: add_formatted_dates
+    name: "Add Formatted Dates"
+    description: "Add formatted date strings to events"
+    function: "add_formatted_dates"
+    default: true
+    parameters:
+      - name: dateFormat
+        type: string
+        description: "Date format string"
+        default: "%B %d, %Y"
+        required: false
+  - id: extract_working_location
+    name: "Extract Working Location"
+    description: "Extract and format working location information"
+    function: "extract_working_location"
+    default: true
+options:
+  - name: timezone
+    type: string
+    description: "Timezone for date/time formatting"
+    default: "UTC"
+    required: false
+  - name: includeAttendees
+    type: boolean
+    description: "Include attendee information in output"
+    default: true
+    required: false
+  - name: includeDescription
+    type: boolean
+    description: "Include event description in output"
+    default: true
+    required: false
