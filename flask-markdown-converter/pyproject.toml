@@ -5,31 +5,48 @@ description = "Flask-based web service that provides webhook endpoints to accept
 authors = ["Your Name <your.email@example.com>"]
 readme = "README.md"
 
-[tool.poetry.dependencies]
-python = ">=3.9,<4.0"
-flask = "2.0.1"
-jinja2 = "3.0.1"
-werkzeug = "2.0.1"  # Add specific Werkzeug version compatible with Flask 2.0.1
-pydantic = "1.9.0"
-python-dotenv = "0.19.1"
-gunicorn = "20.1.0"
-jsonschema = "4.4.0"
-pytz = "^2025.1"
-psutil = "^7.0.0"
-pyyaml = "^6.0.2"
 
 
-[tool.poetry.group.dev.dependencies]
-pytest = "7.0.0"
-pytest-cov = "3.0.0"
-black = "22.1.0"
-flake8 = "4.0.1"
-mypy = "0.931"
 
-[tool.poetry.scripts]
-start = "run:main"
-dev = "flask run"
-
+[tool.pdm.build]
+includes = []
 [build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"
+
+
+[project]
+authors = [
+    {name = "Your Name", email = "your.email@example.com"},
+]
+requires-python = "<4.0,>=3.9"
+dependencies = [
+    "flask==2.0.1",
+    "jinja2==3.0.1",
+    "werkzeug==2.0.1",
+    "pydantic==1.9.0",
+    "python-dotenv==0.19.1",
+    "gunicorn==20.1.0",
+    "jsonschema==4.4.0",
+    "pytz<2026.0,>=2025.1",
+    "psutil<8.0.0,>=7.0.0",
+    "pyyaml<7.0.0,>=6.0.2",
+]
+name = "flask-markdown-converter"
+version = "0.1.0"
+description = "Flask-based web service that provides webhook endpoints to accept various types of JSON input and return Markdown output"
+readme = "README.md"
+
+[project.scripts]
+start = "run:main"
+dev = "os:system [bash]"
+ls = "uv_scripts:ls"
+
+[dependency-groups]
+dev = [
+    "pytest==7.0.0",
+    "pytest-cov==3.0.0",
+    "black==22.1.0",
+    "flake8==4.0.1",
+    "mypy==0.931",
+]
