@@ -170,6 +170,11 @@ def apply_preprocessors(data: Any, format_id: str, preprocessor_ids: Optional[Li
     if not format_config:
         raise ValueError(f"Format not found: {format_id}")
     
+    # Make a deep copy of the original data to avoid modifying it
+    # This ensures that even if a preprocessor fails, we still have the original data
+    import copy
+    processed_data = copy.deepcopy(data)
+    
     # If no preprocessors specified, use default ones
     if preprocessor_ids is None:
         preprocessor_ids = [
@@ -177,8 +182,12 @@ def apply_preprocessors(data: Any, format_id: str, preprocessor_ids: Optional[Li
             if p.get("default", False)
         ]
     
+    # Verify that the input data is in the expected format (list of events)
+    if not isinstance(processed_data, list):
+        logger.warning("Input data is not a list, skipping preprocessors")
+        return processed_data
+    
     # Apply each preprocessor in sequence
-    processed_data = data
     for preprocessor_id in preprocessor_ids:
         # Find preprocessor config
         preprocessor_config = next(
@@ -201,13 +210,24 @@ def apply_preprocessors(data: Any, format_id: str, preprocessor_ids: Optional[Li
             logger.warning(f"Preprocessor function not found: {function_name}")
             continue
         
-        # Apply preprocessor
+        # Apply preprocessor with proper error handling
         try:
-            processed_data = preprocessor_func(processed_data)
+            result = preprocessor_func(processed_data)
+            
+            # Verify the preprocessor result is still a list
+            if not isinstance(result, list):
+                logger.error(f"Preprocessor {preprocessor_id} returned {type(result)} instead of list")
+                # Keep the previous valid data and skip this preprocessor
+                continue
+                
+            processed_data = result
             logger.debug(f"Applied preprocessor: {preprocessor_id}")
         except Exception as e:
             logger.error(f"Error applying preprocessor {preprocessor_id}: {str(e)}")
-            raise ValueError(f"Error in preprocessor {preprocessor_id}: {str(e)}")
+            logger.error(f"Data type that caused the error: {type(processed_data)}")
+            # Continue with the data as-is instead of failing
+            logger.warning(f"Skipping preprocessor {preprocessor_id} due to error")
+            continue
     
     return processed_data
 
@@ -216,7 +236,7 @@ def convert_to_markdown(
     format: str,
     data: Any,
     template_id: str = "standard",
-    preprocessors: Optional[List[str]] = None
+    _preprocessors: Optional[List[str]] = None
 ) -> str:
     """
     Convert JSON data to Markdown using the specified format and template.
@@ -225,7 +245,7 @@ def convert_to_markdown(
         format: The conversion format (e.g., "calendar").
         data: The input data to convert.
         template_id: The template ID to use for conversion.
-        preprocessors: List of preprocessor IDs to apply.
+        _preprocessors: INTERNAL USE ONLY. List of preprocessor IDs to apply.
         
     Returns:
         Markdown content as a string.
@@ -252,8 +272,8 @@ def convert_to_markdown(
         if not template_config:
             raise ValueError(f"Template not found: {template_id}")
     
-    # Apply preprocessors
-    processed_data = apply_preprocessors(data, format, preprocessors)
+    # Apply preprocessors (internal only)
+    processed_data = apply_preprocessors(data, format, _preprocessors)
     
     # Render template
     template_path = template_config.get("file")

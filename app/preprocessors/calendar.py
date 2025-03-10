@@ -26,12 +26,14 @@ def sort_events_by_datetime(events: List[Dict[str, Any]], sort_order: str = "asc
     """
     def get_event_datetime(event):
         """Extract datetime from event for sorting."""
-        start = event.get("start", {})
+        start = event.get("start")
+        if not isinstance(start, dict):
+            return datetime.min
         
         # Handle all-day events (date only)
         if "date" in start:
             try:
-                return datetime.strptime(start["date"], "%Y-%m-%d")
+                return datetime.strptime(start["date"], "%Y-%m-%d").replace(tzinfo=None)
             except (ValueError, TypeError):
                 return datetime.min
         
@@ -42,7 +44,7 @@ def sort_events_by_datetime(events: List[Dict[str, Any]], sort_order: str = "asc
                 dt_str = start["dateTime"]
                 # Replace Z with +00:00 for fromisoformat compatibility
                 dt_str = dt_str.replace("Z", "+00:00")
-                return datetime.fromisoformat(dt_str)
+                return datetime.fromisoformat(dt_str).replace(tzinfo=None)
             except (ValueError, TypeError):
                 return datetime.min
         
@@ -68,7 +70,10 @@ def group_events_by_date(events: List[Dict[str, Any]]) -> Dict[str, List[Dict[st
     grouped_events = defaultdict(list)
     
     for event in events:
-        start = event.get("start", {})
+        start = event.get("start")
+        if not isinstance(start, dict):
+            logger.warning(f"Invalid start format: {start}")
+            continue
         
         # Get the date string
         date_str = None
@@ -130,7 +135,7 @@ def clean_event_descriptions(events: List[Dict[str, Any]]) -> List[Dict[str, Any
     
     # Process each event
     for event in events:
-        if "description" in event and event["description"]:
+        if "description" in event:
             event["description"] = clean_html(event["description"])
     
     return events

@@ -60,10 +60,14 @@ def test_sort_events_by_datetime_handles_invalid_dates():
     ]
     
     sorted_events = sort_events_by_datetime(events)
-    # The invalid dates should be sorted to the beginning (datetime.min)
-    assert sorted_events[0]["id"] in ["event2", "event3"]
-    assert sorted_events[1]["id"] in ["event2", "event3"]
+    # Invalid dates should be at the start, followed by valid dates
+    invalid_event_ids = set(["event2", "event3"])
+    assert sorted_events[0]["id"] in invalid_event_ids
+    assert sorted_events[1]["id"] in invalid_event_ids
     assert sorted_events[2]["id"] == "event1"
+    # Ensure all events are present
+    assert len(sorted_events) == 3
+    assert set(e["id"] for e in sorted_events) == set(["event1", "event2", "event3"])
 
 
 def test_group_events_by_date():

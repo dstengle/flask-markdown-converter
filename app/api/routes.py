@@ -4,7 +4,7 @@ API route definitions.
 import logging
 from flask import Blueprint, jsonify, request, current_app
 from app.middleware.auth import api_key_required
-from app.middleware.validation import validate_json, log_request_middleware
+from app.middleware.validation import validate_json, validate_schema, log_request_middleware
 from app.api.convert import convert_to_markdown, get_format_info, get_all_formats
 
 logger = logging.getLogger(__name__)
@@ -53,6 +53,7 @@ def health():
 @api_key_required
 @log_request_middleware
 @validate_json
+@validate_schema()
 def convert(format):
     """
     Convert JSON input to Markdown output using the specified format.
@@ -68,15 +69,18 @@ def convert(format):
     
     # Get query parameters
     template_id = request.args.get("template", "standard")
-    preprocessors = request.args.getlist("preprocessor")
+    
+    # Check if preprocessors parameter was provided (no longer supported)
+    if "preprocessors" in request.args:
+        logger.warning("Client attempted to use deprecated preprocessors parameter")
+        return jsonify({"error": "The preprocessors parameter is no longer supported"}), 400
     
     try:
         # Convert data to markdown
         markdown_content = convert_to_markdown(
             format=format,
             data=data,
-            template_id=template_id,
-            preprocessors=preprocessors
+            template_id=template_id
         )
         
         # Return markdown content

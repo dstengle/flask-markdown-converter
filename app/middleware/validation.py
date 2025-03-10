@@ -3,10 +3,11 @@ Request validation middleware.
 """
 import json
 import logging
+import os
 from functools import wraps
 from typing import Dict, Any, Optional, Callable, Type
 
-from flask import request, jsonify
+from flask import request, jsonify, current_app
 from pydantic import BaseModel, ValidationError
 from jsonschema import validate, ValidationError as JsonSchemaValidationError
 
@@ -43,12 +44,12 @@ def validate_json(f):
     return decorated_function
 
 
-def validate_schema(schema_path: str):
+def validate_schema(schema_dir: str = "config/schemas"):
     """
     Decorator to validate request JSON against a JSON schema.
     
     Args:
-        schema_path: Path to the JSON schema file.
+        schema_dir: Directory containing the JSON schema files.
         
     Returns:
         Decorator function that validates against the schema.
@@ -56,9 +57,15 @@ def validate_schema(schema_path: str):
     def decorator(f):
         @wraps(f)
         def decorated_function(*args, **kwargs):
+            schema_dir = current_app.config.get("CONFIG_DIR", os.path.join(os.path.dirname(os.path.dirname(__file__)), "config/schemas"))
+            schema_path = f"{schema_dir}/{request.path.strip('/').split('/')[-1]}.json"
             try:
                 with open(schema_path, 'r') as schema_file:
                     schema = json.load(schema_file)
+            except FileNotFoundError:
+                # Continue without schema validation for formats without schema
+                # The actual format validation will happen in the convert function
+                return f(*args, **kwargs)
             except Exception as e:
                 logger.error(f"Failed to load schema from {schema_path}: {str(e)}")
                 return jsonify({"error": "Server configuration error"}), 500
@@ -67,8 +74,8 @@ def validate_schema(schema_path: str):
                 data = request.get_json()
                 validate(instance=data, schema=schema)
             except JsonSchemaValidationError as e:
-                logger.warning(f"Schema validation failed: {str(e)}")
-                return jsonify({"error": f"Validation error: {str(e)}"}), 400
+                logger.warning(f"Schema validation failed: {str(e.message)}")
+                return jsonify({"error": f"Schema validation failed: {str(e.message)}"}), 400
             
             return f(*args, **kwargs)
         
